@@ -1,0 +1,947 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>會計傳票自主練習系統</title>
+    <style>
+        :root {
+            --primary: #4f46e5;
+            --primary-hover: #4338ca;
+            --bg: #f8fafc;
+            --card-bg: #ffffff;
+            --border: #e2e8f0;
+            --border-focus: #818cf8;
+            --text-main: #0f172a;
+            --text-sub: #64748b;
+            --debit-color: #0d9488;
+            --debit-bg: #f0fdf4;
+            --credit-color: #d97706;
+            --credit-bg: #fffbeb;
+            --danger: #ef4444;
+            --success: #10b981;
+            --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+            --shadow-lg: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Microsoft JhengHei", sans-serif;
+            background-color: var(--bg);
+            color: var(--text-main);
+            margin: 0;
+            padding: 12px;
+            font-size: 14px;
+            line-height: 1.4;
+        }
+
+        .container {
+            max-width: 860px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .card {
+            background: var(--card-bg);
+            padding: 14px 16px;
+            border-radius: 12px;
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--border);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            padding-bottom: 8px;
+            border-bottom: 1.5px solid #f1f5f9;
+        }
+
+        h2, h3 {
+            margin: 0;
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--text-main);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .form-row {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        label {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--text-sub);
+            letter-spacing: 0.03em;
+        }
+
+        input, select {
+            padding: 6px 10px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-size: 0.875rem;
+            outline: none;
+            transition: all 0.15s ease;
+            background-color: #f8fafc;
+        }
+
+        input:focus, select:focus {
+            background-color: #fff;
+            border-color: var(--border-focus);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+        }
+
+        /* 桌面版表格樣式 */
+        .entry-table-wrap {
+            width: 100%;
+            overflow-x: auto;
+        }
+
+        .entry-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            margin-top: 4px;
+        }
+
+        .entry-table th {
+            background-color: #f8fafc;
+            color: var(--text-sub);
+            font-weight: 600;
+            font-size: 0.78rem;
+            padding: 6px 10px;
+            text-align: left;
+            border-top: 1px solid var(--border);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .entry-table td {
+            padding: 6px 8px;
+            border-bottom: 1px solid #f1f5f9;
+            vertical-align: middle;
+        }
+
+        /* 手機 RWD 卡片化輸入排版 */
+        @media (max-width: 640px) {
+            body { padding: 8px; }
+            .card { padding: 12px; }
+            .form-row { flex-direction: column; gap: 8px; }
+            
+            .entry-table, .entry-table thead, .entry-table tbody, .entry-table th, .entry-table td, .entry-table tr {
+                display: block;
+            }
+            
+            .entry-table thead { display: none; }
+
+            .entry-table tr {
+                background: #f8fafc;
+                border: 1px solid var(--border);
+                border-radius: 8px;
+                padding: 8px 10px;
+                margin-bottom: 8px;
+                position: relative;
+                display: grid;
+                grid-template-columns: 85px 1fr;
+                gap: 6px;
+                align-items: center;
+            }
+
+            .entry-table td {
+                padding: 0;
+                border: none;
+            }
+
+            .entry-table td:nth-child(1) { grid-column: 1; }
+            .entry-table td:nth-child(2) { grid-column: 2; }
+            .entry-table td:nth-child(3) { grid-column: 1 / -1; }
+            .entry-table td:nth-child(4) { 
+                position: absolute; 
+                top: 6px; 
+                right: 6px; 
+            }
+
+            /* 手機版歷史傳票清單優化 */
+            .voucher-table, .voucher-table thead, .voucher-table tbody, .voucher-table tr, .voucher-table td {
+                display: block;
+            }
+            .voucher-table thead { display: none; }
+            .voucher-table tr {
+                padding: 6px 0;
+                border-bottom: 1px dashed #f1f5f9;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+            }
+            .voucher-table td {
+                padding: 2px 0;
+                border: none;
+            }
+        }
+
+        /* 貸方縮排關鍵樣式 */
+        .credit-indent {
+            padding-left: 2em !important;
+            color: var(--credit-color);
+            font-weight: 600;
+        }
+
+        .debit-style {
+            color: var(--debit-color);
+            font-weight: 600;
+        }
+
+        .btn {
+            cursor: pointer;
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 0.85rem;
+            padding: 8px 14px;
+            transition: all 0.15s ease;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+            touch-action: manipulation;
+        }
+
+        .btn:hover { background-color: var(--primary-hover); }
+        .btn:active { transform: scale(0.98); }
+
+        .btn-select-account {
+            background-color: #fff;
+            color: var(--text-main);
+            border: 1px solid var(--border);
+            width: 100%;
+            text-align: left;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 6px 10px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.875rem;
+        }
+
+        .btn-secondary {
+            background-color: #f1f5f9;
+            color: var(--text-main);
+            border: 1px solid var(--border);
+            box-shadow: none;
+        }
+
+        .btn-action-ghost {
+            background: transparent;
+            color: var(--text-sub);
+            border: 1px solid var(--border);
+            padding: 2px 6px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.75rem;
+            transition: all 0.15s;
+        }
+        .btn-action-ghost:hover {
+            background: #e2e8f0;
+            color: var(--text-main);
+        }
+
+        .btn-danger-ghost {
+            background: transparent;
+            color: var(--danger);
+            border: none;
+            padding: 4px 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.8rem;
+        }
+
+        .btn-sm { padding: 5px 10px; font-size: 0.78rem; }
+        .btn-block { width: 100%; }
+
+        .status-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 12px;
+            border-radius: 8px;
+            background: #f8fafc;
+            border: 1px solid var(--border);
+            margin-top: 10px;
+            font-size: 0.82rem;
+            font-weight: 600;
+        }
+
+        .balanced { color: var(--success); }
+        .unbalanced { color: var(--danger); }
+
+        .voucher-card {
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 10px 12px;
+            margin-bottom: 10px;
+            background: #fff;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .voucher-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px dashed var(--border);
+            padding-bottom: 6px;
+            margin-bottom: 6px;
+            font-size: 0.8rem;
+            color: var(--text-sub);
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+
+        .voucher-actions {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .text-right { text-align: right; }
+        .text-center { text-align: center; }
+
+        /* Modal 現代化視窗 */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(15, 23, 42, 0.4);
+            backdrop-filter: blur(4px);
+            display: none;
+            justify-content: center;
+            align-items: flex-end;
+            z-index: 1000;
+        }
+
+        @media (min-width: 641px) {
+            .modal-overlay { align-items: center; }
+        }
+
+        .modal-win {
+            background: #ffffff;
+            border-radius: 16px 16px 0 0;
+            width: 100%;
+            max-width: 600px;
+            box-shadow: var(--shadow-lg);
+            border: 1px solid var(--border);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            max-height: 85vh;
+        }
+
+        @media (min-width: 641px) {
+            .modal-win { border-radius: 12px; max-height: 80vh; }
+        }
+
+        .modal-title-bar {
+            padding: 12px 16px;
+            background: #fff;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: 700;
+            font-size: 0.95rem;
+        }
+
+        .category-tabs {
+            display: flex;
+            background: #f8fafc;
+            border-bottom: 1px solid var(--border);
+            padding: 4px 8px 0 8px;
+            gap: 2px;
+            #overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .tab-btn {
+            padding: 8px 12px;
+            font-size: 0.8rem;
+            border: 1px solid transparent;
+            border-bottom: none;
+            background: transparent;
+            color: var(--text-sub);
+            cursor: pointer;
+            border-radius: 6px 6px 0 0;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+        .tab-btn.active {
+            background: #ffffff;
+            color: var(--primary);
+            border-color: var(--border);
+            border-bottom-color: #ffffff;
+        }
+
+        .account-grid-container {
+            overflow-y: auto;
+            flex-grow: 1;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .account-grid {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85rem;
+        }
+
+        .account-grid th, .account-grid td {
+            padding: 10px 14px;
+            border-bottom: 1px solid #f1f5f9;
+        }
+
+        .account-grid th {
+            background: #f8fafc;
+            color: var(--text-sub);
+            font-size: 0.75rem;
+            position: sticky;
+            top: 0;
+            text-align: left;
+        }
+
+        .side-badge {
+            display: inline-block;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.72rem;
+            font-weight: 600;
+        }
+        .side-debit { background: var(--debit-bg); color: var(--debit-color); }
+        .side-credit { background: var(--credit-bg); color: var(--credit-color); }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <!-- 傳票輸入區 -->
+    <div class="card" id="inputCard">
+        <div class="card-header">
+            <h2 id="formTitle">📑 會計傳票登錄</h2>
+            <span style="font-size:0.75rem; color:var(--text-sub);">RWD 手機優化版</span>
+        </div>
+        
+        <div class="form-row">
+            <div class="form-group">
+                <label>日期</label>
+                <input type="text" id="voucherDate" value="102/10/02">
+            </div>
+            <div class="form-group" style="flex-grow: 1;">
+                <label>交易摘要</label>
+                <input type="text" id="voucherSummary" placeholder="例如：向嘉南商店進貨">
+            </div>
+        </div>
+
+        <div class="entry-table-wrap">
+            <table class="entry-table">
+                <thead>
+                    <tr>
+                        <th style="width: 110px;">借 / 貸</th>
+                        <th>會計項目（點擊選擇）</th>
+                        <th style="width: 140px;">金額</th>
+                        <th style="width: 40px;" class="text-center">操作</th>
+                    </tr>
+                </thead>
+                <tbody id="entryRows">
+                    <!-- 動態分錄 -->
+                </tbody>
+            </table>
+        </div>
+
+        <div style="margin-top: 10px; display: flex; gap: 8px;">
+            <button class="btn btn-secondary btn-sm" style="flex:1;" onclick="addRow('借')">＋ 借方列</button>
+            <button class="btn btn-secondary btn-sm" style="flex:1;" onclick="addRow('貸')">＋ 貸方列</button>
+        </div>
+
+        <div class="status-bar">
+            <div>
+                借: $<span id="totalDebit">0</span> | 貸: $<span id="totalCredit">0</span>
+            </div>
+            <div id="balanceStatus" class="unbalanced">✕ 借貸未平衡</div>
+        </div>
+
+        <div style="margin-top: 12px; display: flex; gap: 8px;">
+            <button class="btn btn-block" id="btnSave" onclick="saveVoucher()">✓ 儲存傳票 (加入清單)</button>
+            <button class="btn btn-secondary" id="btnCancelEdit" style="display: none;" onclick="cancelEdit()">取消編輯</button>
+        </div>
+    </div>
+
+    <!-- 歷史傳票清單 -->
+    <div class="card">
+        <div class="card-header">
+            <h3>📋 已完成傳票總覽</h3>
+            <button class="btn-danger-ghost btn-sm" onclick="clearAllVouchers()">清空全部</button>
+        </div>
+        <div id="voucherList">
+            <p style="color: var(--text-sub); text-align: center; margin: 12px 0;">尚未新增任何傳票。</p>
+        </div>
+    </div>
+</div>
+
+<!-- 會計項目 Modal -->
+<div class="modal-overlay" id="accountModal">
+    <div class="modal-win">
+        <div class="modal-title-bar">
+            <span>🔍 選擇會計項目</span>
+            <button class="btn-danger-ghost" onclick="closeModal()">✕ 關閉</button>
+        </div>
+        <div class="category-tabs" id="categoryTabs"></div>
+        <div class="account-grid-container">
+            <table class="account-grid">
+                <thead>
+                    <tr>
+                        <th style="width: 25%;">編號</th>
+                        <th>項目名稱</th>
+                        <th style="width: 20%;">方向</th>
+                    </tr>
+                </thead>
+                <tbody id="accountTableBody"></tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+    // 擴充後之完整常用會計科目表
+    const accountDatabase = {
+        "1資產": [
+            { code: "1101", name: "庫存現金", side: "1" },
+            { code: "1105", name: "現金", side: "1" },
+            { code: "1110", name: "銀行存款", side: "1" },
+            { code: "1115", name: "透過損益按公允價值衡量之金融資產", side: "1" },
+            { code: "1120", name: "應收票據", side: "1" },
+            { code: "1122", name: "備抵損失-應收票據", side: "2", contra: true },
+            { code: "1130", name: "應收帳款", side: "1" },
+            { code: "1132", name: "備抵損失-應收帳款", side: "2", contra: true },
+            { code: "1135", name: "應收利息", side: "1" },
+            { code: "1148", name: "其他應收款", side: "1" },
+            { code: "1191", name: "存貨", side: "1" },
+            { code: "1195", name: "備抵存貨跌價損失", side: "2", contra: true },
+            { code: "1220", name: "預付貨款", side: "1" },
+            { code: "1230", name: "預付費用", side: "1" },
+            { code: "1232", name: "預付租金", side: "1" },
+            { code: "1240", name: "預付保險費", side: "1" },
+            { code: "1250", name: "暫付款", side: "1" },
+            { code: "1260", name: "用品盤存", side: "1" },
+            { code: "1401", name: "地產、廠房及設備", side: "1" },
+            { code: "1410", name: "土地", side: "1" },
+            { code: "1420", name: "房屋及建築", side: "1" },
+            { code: "1421", name: "累計折舊-房屋及建築", side: "2", contra: true },
+            { code: "1430", name: "機器設備", side: "1" },
+            { code: "1431", name: "累計折舊-機器設備", side: "2", contra: true },
+            { code: "1440", name: "運輸設備", side: "1" },
+            { code: "1441", name: "累計折舊-運輸設備", side: "2", contra: true },
+            { code: "1450", name: "辦公設備", side: "1" },
+            { code: "1451", name: "累計折舊-辦公設備", side: "2", contra: true }
+        ],
+        "2負債": [
+            { code: "2105", name: "短期借款", side: "2" },
+            { code: "2120", name: "應付票據", side: "2" },
+            { code: "2130", name: "應付帳款", side: "2" },
+            { code: "2140", name: "應付薪資", side: "2" },
+            { code: "2150", name: "其他應付款", side: "2" },
+            { code: "2160", name: "應付利息", side: "2" },
+            { code: "2170", name: "應付稅額", side: "2" },
+            { code: "2200", name: "預收貨款", side: "2" },
+            { code: "2210", name: "預收收入", side: "2" },
+            { code: "2220", name: "暫收款", side: "2" },
+            { code: "2230", name: "存入保證金", side: "2" },
+            { code: "2501", name: "長期借款", side: "2" }
+        ],
+        "3權益": [
+            { code: "3101", name: "股本", side: "2" },
+            { code: "3110", name: "普通股股本", side: "2" },
+            { code: "3120", name: "業主資本", side: "1" },
+            { code: "3130", name: "業主往來", side: "1" },
+            { code: "3201", name: "資本公積", side: "2" },
+            { code: "3301", name: "法定盈餘公積", side: "2" },
+            { code: "3302", name: "特別盈餘公積", side: "2" },
+            { code: "3303", name: "未分配盈餘", side: "2" },
+            { code: "3304", name: "累積虧損", side: "1" },
+            { code: "3401", name: "本期損益", side: "2" }
+        ],
+        "4營業收入": [
+            { code: "4101", name: "銷貨收入", side: "2" },
+            { code: "4102", name: "銷貨退回", side: "1", contra: true },
+            { code: "4103", name: "銷貨折讓", side: "1", contra: true },
+            { code: "4104", name: "服務收入", side: "2" },
+            { code: "4105", name: "勞務收入", side: "2" }
+        ],
+        "5營業成本": [
+            { code: "5101", name: "銷貨成本", side: "1" },
+            { code: "5102", name: "進貨", side: "1" },
+            { code: "5103", name: "進貨費用", side: "1" },
+            { code: "5104", name: "進貨退出", side: "2", contra: true },
+            { code: "5105", name: "進貨折讓", side: "2", contra: true }
+        ],
+        "6營業費用": [
+            { code: "6101", name: "薪資支出", side: "1" },
+            { code: "6102", name: "租金支出", side: "1" },
+            { code: "6103", name: "文具用品", side: "1" },
+            { code: "6104", name: "旅費", side: "1" },
+            { code: "6105", name: "運費", side: "1" },
+            { code: "6106", name: "郵電費", side: "1" },
+            { code: "6107", name: "修繕費", side: "1" },
+            { code: "6108", name: "廣告費", side: "1" },
+            { code: "6109", name: "水電瓦斯費", side: "1" },
+            { code: "6110", name: "保險費", side: "1" },
+            { code: "6111", name: "交際費", side: "1" },
+            { code: "6112", name: "捐贈", side: "1" },
+            { code: "6113", name: "稅捐", side: "1" },
+            { code: "6114", name: "折舊", side: "1" },
+            { code: "6115", name: "各項攤提", side: "1" },
+            { code: "6116", name: "壞帳費用 (預期信用減損損失)", side: "1" },
+            { code: "6117", name: "職工福利", side: "1" },
+            { code: "6118", name: "訓練費", side: "1" },
+            { code: "6199", name: "其他費用", side: "1" }
+        ],
+        "7營業外收支": [
+            { code: "7101", name: "利息收入", side: "2" },
+            { code: "7102", name: "股利收入", side: "2" },
+            { code: "7103", name: "租金收入", side: "2" },
+            { code: "7104", name: "佣金收入", side: "2" },
+            { code: "7105", name: "處分資產利益", side: "2" },
+            { code: "7106", name: "其他收入", side: "2" },
+            { code: "7201", name: "利息費用", side: "1" },
+            { code: "7202", name: "處分資產損失", side: "1" },
+            { code: "7203", name: "處分投資損失", side: "1" },
+            { code: "7204", name: "其他損失", side: "1" },
+            { code: "7901", name: "所得稅費用", side: "1" }
+        ]
+    };
+
+    let activeRowBtn = null;
+    let currentCategory = "1資產";
+    let savedVouchers = [];
+    let editingVoucherId = null;
+
+    window.onload = function() {
+        initModalTabs();
+        resetForm();
+    };
+
+    function initModalTabs() {
+        const tabsContainer = document.getElementById('categoryTabs');
+        tabsContainer.innerHTML = Object.keys(accountDatabase).map(cat => `
+            <button class="tab-btn ${cat === currentCategory ? 'active' : ''}" onclick="switchCategory('${cat}')">${cat}</button>
+        `).join('');
+        renderCategoryItems(currentCategory);
+    }
+
+    function switchCategory(cat) {
+        currentCategory = cat;
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.classList.toggle('active', btn.innerText === cat);
+        });
+        renderCategoryItems(cat);
+    }
+
+    function renderCategoryItems(cat) {
+        const tbody = document.getElementById('accountTableBody');
+        const items = accountDatabase[cat] || [];
+
+        tbody.innerHTML = items.map(item => `
+            <tr onclick="selectAccount('${item.name}', '${item.side}')">
+                <td style="color:var(--text-sub); font-family:monospace;">${item.code}</td>
+                <td>${item.name}</td>
+                <td>
+                    <span class="side-badge ${item.side === '1' ? 'side-debit' : 'side-credit'}">
+                        ${item.side === '1' ? '借方' : '貸方'}
+                    </span>
+                </td>
+            </tr>
+        `).join('');
+    }
+
+    function openModal(btnElement) {
+        activeRowBtn = btnElement;
+        document.getElementById('accountModal').style.display = 'flex';
+    }
+
+    function closeModal() {
+        document.getElementById('accountModal').style.display = 'none';
+        activeRowBtn = null;
+    }
+
+    function selectAccount(name, defaultSideCode) {
+        if (activeRowBtn) {
+            activeRowBtn.querySelector('.acc-name').innerText = name;
+            activeRowBtn.dataset.account = name;
+
+            const tr = activeRowBtn.closest('tr');
+            const sideSelect = tr.querySelector('.side-select');
+            if (sideSelect) {
+                sideSelect.value = (defaultSideCode === "1") ? '借' : '貸';
+            }
+            calculateTotal();
+        }
+        closeModal();
+    }
+
+    function addRow(defaultSide = '借', accountName = '現金', amountValue = '') {
+        const tbody = document.getElementById('entryRows');
+        const tr = document.createElement('tr');
+
+        tr.innerHTML = `
+            <td>
+                <select onchange="calculateTotal()" class="side-select" style="width: 100%;">
+                    <option value="借" ${defaultSide === '借' ? 'selected' : ''}>借 (Debit)</option>
+                    <option value="貸" ${defaultSide === '貸' ? 'selected' : ''}>貸 (Credit)</option>
+                </select>
+            </td>
+            <td>
+                <button type="button" class="btn-select-account" data-account="${accountName}" onclick="openModal(this)">
+                    <span class="acc-name">${accountName}</span>
+                    <span style="font-size:0.7rem; color:var(--text-sub);">🔍</span>
+                </button>
+            </td>
+            <td>
+                <input type="number" class="amount-input" placeholder="金額" min="0" value="${amountValue}" oninput="calculateTotal()" style="width: 100%;">
+            </td>
+            <td class="text-center">
+                <button class="btn-danger-ghost" onclick="removeRow(this)">✕</button>
+            </td>
+        `;
+
+        tbody.appendChild(tr);
+        calculateTotal();
+    }
+
+    function removeRow(btn) {
+        btn.closest('tr').remove();
+        calculateTotal();
+    }
+
+    function calculateTotal() {
+        let totalDebit = 0;
+        let totalCredit = 0;
+
+        const rows = document.querySelectorAll('#entryRows tr');
+        rows.forEach(row => {
+            const side = row.querySelector('.side-select').value;
+            const amount = parseFloat(row.querySelector('.amount-input').value) || 0;
+
+            if (side === '借') totalDebit += amount;
+            else totalCredit += amount;
+        });
+
+        document.getElementById('totalDebit').innerText = totalDebit.toLocaleString();
+        document.getElementById('totalCredit').innerText = totalCredit.toLocaleString();
+
+        const statusEl = document.getElementById('balanceStatus');
+        if (totalDebit > 0 && totalDebit === totalCredit) {
+            statusEl.innerText = "✓ 平衡";
+            statusEl.className = "balanced";
+        } else {
+            statusEl.innerText = "✕ 未平衡";
+            statusEl.className = "unbalanced";
+        }
+    }
+
+    function resetForm() {
+        editingVoucherId = null;
+        document.getElementById('formTitle').innerText = '📑 會計傳票登錄';
+        document.getElementById('btnSave').innerText = '✓ 儲存傳票 (加入清單)';
+        document.getElementById('btnCancelEdit').style.display = 'none';
+        document.getElementById('voucherSummary').value = '';
+        document.getElementById('entryRows').innerHTML = '';
+        addRow('借');
+        addRow('貸');
+    }
+
+    function saveVoucher() {
+        const date = document.getElementById('voucherDate').value.trim();
+        const summary = document.getElementById('voucherSummary').value.trim();
+        const rows = document.querySelectorAll('#entryRows tr');
+
+        let totalDebit = 0;
+        let totalCredit = 0;
+        let entries = [];
+
+        rows.forEach(row => {
+            const side = row.querySelector('.side-select').value;
+            const accountBtn = row.querySelector('.btn-select-account');
+            const account = accountBtn ? accountBtn.dataset.account : '';
+            const amount = parseFloat(row.querySelector('.amount-input').value) || 0;
+
+            if (amount > 0 && account) {
+                entries.push({ side, account, amount });
+                if (side === '借') totalDebit += amount;
+                else totalCredit += amount;
+            }
+        });
+
+        if (entries.length === 0) {
+            alert('請至少輸入一筆有效的科目與金額！');
+            return;
+        }
+
+        if (totalDebit !== totalCredit) {
+            alert('借貸金額不相等，無法儲存傳票！');
+            return;
+        }
+
+        // 自動排序：借方在上，貸方在下
+        entries.sort((a, b) => {
+            if (a.side === '借' && b.side === '貸') return -1;
+            if (a.side === '貸' && b.side === '借') return 1;
+            return 0;
+        });
+
+        if (editingVoucherId !== null) {
+            const index = savedVouchers.findIndex(v => v.id === editingVoucherId);
+            if (index !== -1) {
+                savedVouchers[index] = {
+                    id: editingVoucherId,
+                    date: date || '未填寫日期',
+                    summary: summary || '無摘要',
+                    entries: entries,
+                    total: totalDebit
+                };
+            }
+        } else {
+            savedVouchers.push({
+                id: Date.now(),
+                date: date || '未填寫日期',
+                summary: summary || '無摘要',
+                entries: entries,
+                total: totalDebit
+            });
+        }
+
+        renderVouchers();
+        resetForm();
+    }
+
+    function editVoucher(id) {
+        const voucher = savedVouchers.find(v => v.id === id);
+        if (!voucher) return;
+
+        editingVoucherId = id;
+        document.getElementById('formTitle').innerText = '✏️ 編輯會計傳票';
+        document.getElementById('btnSave').innerText = '💾 更新傳票內容';
+        document.getElementById('btnCancelEdit').style.display = 'inline-block';
+
+        document.getElementById('voucherDate').value = voucher.date;
+        document.getElementById('voucherSummary').value = voucher.summary;
+
+        const tbody = document.getElementById('entryRows');
+        tbody.innerHTML = '';
+        voucher.entries.forEach(e => {
+            addRow(e.side, e.account, e.amount);
+        });
+
+        document.getElementById('inputCard').scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function cancelEdit() {
+        resetForm();
+    }
+
+    function moveVoucher(index, direction) {
+        const targetIndex = index + direction;
+        if (targetIndex < 0 || targetIndex >= savedVouchers.length) return;
+
+        const temp = savedVouchers[index];
+        savedVouchers[index] = savedVouchers[targetIndex];
+        savedVouchers[targetIndex] = temp;
+
+        renderVouchers();
+    }
+
+    function renderVouchers() {
+        const container = document.getElementById('voucherList');
+        if (savedVouchers.length === 0) {
+            container.innerHTML = '<p style="color: var(--text-sub); text-align: center; margin: 12px 0;">尚未新增任何傳票。</p>';
+            return;
+        }
+
+        container.innerHTML = savedVouchers.map((v, index) => {
+            let rowsHtml = v.entries.map(e => {
+                const isCredit = e.side === '貸';
+                const indentClass = isCredit ? 'credit-indent' : 'debit-style';
+                const accountDisplay = isCredit ? `貸：${e.account}` : `借：${e.account}`;
+                
+                return `
+                    <tr>
+                        <td class="${indentClass}">${accountDisplay}</td>
+                        <td class="text-right" style="font-weight:600;">${!isCredit ? '$' + e.amount.toLocaleString() : ''}</td>
+                        <td class="text-right" style="font-weight:600;">${isCredit ? '$' + e.amount.toLocaleString() : ''}</td>
+                    </tr>
+                `;
+            }).join('');
+
+            return `
+                <div class="voucher-card">
+                    <div class="voucher-header">
+                        <span><strong>#${index + 1}</strong> | ${v.date} | ${v.summary}</span>
+                        <div class="voucher-actions">
+                            <button class="btn-action-ghost" onclick="moveVoucher(${index}, -1)" ${index === 0 ? 'disabled style="opacity:0.3;cursor:default;"' : ''}>⬆ 上移</button>
+                            <button class="btn-action-ghost" onclick="moveVoucher(${index}, 1)" ${index === savedVouchers.length - 1 ? 'disabled style="opacity:0.3;cursor:default;"' : ''}>⬇ 下移</button>
+                            <button class="btn-action-ghost" style="color:var(--primary);" onclick="editVoucher(${v.id})">✏️ 編輯</button>
+                            <button class="btn-danger-ghost" onclick="deleteVoucher(${v.id})">刪除</button>
+                        </div>
+                    </div>
+                    <table class="entry-table voucher-table">
+                        <thead>
+                            <tr>
+                                <th>會計項目</th>
+                                <th style="width: 100px;" class="text-right">借方金額</th>
+                                <th style="width: 100px;" class="text-right">貸方金額</th>
+                            </tr>
+                        </thead>
+                        <tbody>${rowsHtml}</tbody>
+                        <tfoot>
+                            <tr style="font-weight: bold; background: #f8fafc; border-top:1px solid #e2e8f0;">
+                                <td class="text-right" style="padding:4px 0;">合計</td>
+                                <td class="text-right" style="padding:4px 0;" colspan="2">$${v.total.toLocaleString()}</td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            `;
+        }).join('');
+    }
+
+    function deleteVoucher(id) {
+        if (editingVoucherId === id) {
+            cancelEdit();
+        }
+        savedVouchers = savedVouchers.filter(v => v.id !== id);
+        renderVouchers();
+    }
+
+    function clearAllVouchers() {
+        if (confirm('確定要清空所有已儲存的傳票嗎？')) {
+            savedVouchers = [];
+            resetForm();
+            renderVouchers();
+        }
+    }
+</script>
+
+</body>
+</html>

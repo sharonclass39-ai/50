@@ -106,7 +106,6 @@
             box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
         }
 
-        /* 桌面版表格樣式 */
         .entry-table-wrap {
             width: 100%;
             overflow-x: auto;
@@ -136,7 +135,6 @@
             vertical-align: middle;
         }
 
-        /* 手機 RWD 卡片化輸入排版 */
         @media (max-width: 640px) {
             body { padding: 8px; }
             .card { padding: 12px; }
@@ -175,7 +173,6 @@
                 right: 6px; 
             }
 
-            /* 手機版歷史傳票清單優化 */
             .voucher-table, .voucher-table thead, .voucher-table tbody, .voucher-table tr, .voucher-table td {
                 display: block;
             }
@@ -193,7 +190,6 @@
             }
         }
 
-        /* 貸方縮排關鍵樣式 */
         .credit-indent {
             padding-left: 2em !important;
             color: var(--credit-color);
@@ -323,7 +319,7 @@
         .text-right { text-align: right; }
         .text-center { text-align: center; }
 
-        /* Modal 現代化視窗 */
+        /* Modal 重構版面，修正排版與遮擋問題 */
         .modal-overlay {
             position: fixed;
             top: 0; left: 0; right: 0; bottom: 0;
@@ -342,18 +338,19 @@
         .modal-win {
             background: #ffffff;
             border-radius: 16px 16px 0 0;
-            width: 100%;
-            max-width: 600px;
+            width: 95%;
+            max-width: 680px;
             box-shadow: var(--shadow-lg);
             border: 1px solid var(--border);
             overflow: hidden;
             display: flex;
             flex-direction: column;
-            max-height: 85vh;
+            height: 80vh; /* 固定高度防止擠壓 */
+            max-height: 600px;
         }
 
         @media (min-width: 641px) {
-            .modal-win { border-radius: 12px; max-height: 80vh; }
+            .modal-win { border-radius: 12px; }
         }
 
         .modal-title-bar {
@@ -365,21 +362,26 @@
             align-items: center;
             font-weight: 700;
             font-size: 0.95rem;
+            flex-shrink: 0; /* 防止標題列被壓縮 */
         }
 
+        /* 修正：分頁標籤固定且不被壓縮 */
         .category-tabs {
             display: flex;
             background: #f8fafc;
             border-bottom: 1px solid var(--border);
-            padding: 4px 8px 0 8px;
-            gap: 2px;
-            #overflow-x: auto;
+            padding: 6px 6px 0 6px;
+            gap: 4px;
+            overflow-x: auto;
+            white-space: nowrap;
+            width: 100%;
+            flex-shrink: 0; /* 關鍵：防止頁籤高度被擠壓導致文字被掩蓋 */
             -webkit-overflow-scrolling: touch;
         }
 
         .tab-btn {
-            padding: 8px 12px;
-            font-size: 0.8rem;
+            padding: 6px 12px;
+            font-size: 0.82rem;
             border: 1px solid transparent;
             border-bottom: none;
             background: transparent;
@@ -387,7 +389,7 @@
             cursor: pointer;
             border-radius: 6px 6px 0 0;
             font-weight: 600;
-            white-space: nowrap;
+            flex-shrink: 0;
         }
 
         .tab-btn.active {
@@ -397,10 +399,12 @@
             border-bottom-color: #ffffff;
         }
 
+        /* 修正：列表獨立區域滾動 */
         .account-grid-container {
             overflow-y: auto;
-            flex-grow: 1;
+            flex: 1; /* 自動佔滿剩餘高度 */
             -webkit-overflow-scrolling: touch;
+            background: #fff;
         }
 
         .account-grid {
@@ -417,10 +421,9 @@
         .account-grid th {
             background: #f8fafc;
             color: var(--text-sub);
-            font-size: 0.75rem;
-            position: sticky;
-            top: 0;
+            font-size: 0.78rem;
             text-align: left;
+            border-bottom: 1px solid var(--border);
         }
 
         .side-badge {
@@ -437,7 +440,6 @@
 <body>
 
 <div class="container">
-    <!-- 傳票輸入區 -->
     <div class="card" id="inputCard">
         <div class="card-header">
             <h2 id="formTitle">📑 會計傳票登錄</h2>
@@ -465,9 +467,7 @@
                         <th style="width: 40px;" class="text-center">操作</th>
                     </tr>
                 </thead>
-                <tbody id="entryRows">
-                    <!-- 動態分錄 -->
-                </tbody>
+                <tbody id="entryRows"></tbody>
             </table>
         </div>
 
@@ -489,7 +489,6 @@
         </div>
     </div>
 
-    <!-- 歷史傳票清單 -->
     <div class="card">
         <div class="card-header">
             <h3>📋 已完成傳票總覽</h3>
@@ -501,7 +500,6 @@
     </div>
 </div>
 
-<!-- 會計項目 Modal -->
 <div class="modal-overlay" id="accountModal">
     <div class="modal-win">
         <div class="modal-title-bar">
@@ -525,7 +523,6 @@
 </div>
 
 <script>
-    // 擴充後之完整常用會計科目表
     const accountDatabase = {
         "1資產": [
             { code: "1101", name: "庫存現金", side: "1" },
@@ -616,6 +613,7 @@
             { code: "6116", name: "壞帳費用 (預期信用減損損失)", side: "1" },
             { code: "6117", name: "職工福利", side: "1" },
             { code: "6118", name: "訓練費", side: "1" },
+            { code: "6119", name: "佣金支出", side: "1" },
             { code: "6199", name: "其他費用", side: "1" }
         ],
         "7營業外收支": [
@@ -804,7 +802,6 @@
             return;
         }
 
-        // 自動排序：借方在上，貸方在下
         entries.sort((a, b) => {
             if (a.side === '借' && b.side === '貸') return -1;
             if (a.side === '貸' && b.side === '借') return 1;
